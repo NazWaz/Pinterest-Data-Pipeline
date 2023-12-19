@@ -56,9 +56,9 @@ def run_infinite_post_data_loop():
             for row in user_selected_row:
                 user_result = dict(row._mapping)
             
-            invoke_url = "https://5i08sjvi96.execute-api.us-east-1.amazonaws.com/test/topics/12b287eedf6d.pin"
+            invoke_url_pin = "https://5i08sjvi96.execute-api.us-east-1.amazonaws.com/test/topics/12b287eedf6d.pin"
 
-            payload = json.dumps({
+            pin_data = json.dumps({
                 "records": [
                     {
                         "value": {"index": pin_result["index"], "unique_id": pin_result["unique_id"], "title": pin_result["title"], 
@@ -72,9 +72,9 @@ def run_infinite_post_data_loop():
             })   
 
             headers = {'Content-Type': 'application/vnd.kafka.json.v2+json'}
-            response = requests.request("POST", invoke_url, headers=headers, data=payload)
+            pin_response = requests.request("POST", invoke_url_pin, headers=headers, data=pin_data)
 
-            print(response.status_code)
+            print(pin_response.status_code)
 
 if __name__ == "__main__":
     run_infinite_post_data_loop()
