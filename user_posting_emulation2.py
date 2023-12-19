@@ -9,6 +9,7 @@ import boto3
 import json
 import sqlalchemy
 from sqlalchemy import text
+import datetime
 
 import json
 
@@ -74,7 +75,39 @@ def run_infinite_post_data_loop():
             headers = {'Content-Type': 'application/vnd.kafka.json.v2+json'}
             pin_response = requests.request("POST", invoke_url_pin, headers=headers, data=pin_data)
 
+            invoke_url_geo = "https://5i08sjvi96.execute-api.us-east-1.amazonaws.com/test/topics/12b287eedf6d.geo"
+
+            geo_data = json.dumps({
+                "records": [
+                    {
+                        "value": {"ind": geo_result["ind"], "timestamp": geo_result["timestamp"], "latitude": geo_result["latitude"], 
+                                  "longitude": geo_result["longitude"], "country": geo_result["country"]
+                                  }
+                    }
+                ]
+            }, default=str)   
+
+            headers = {'Content-Type': 'application/vnd.kafka.json.v2+json'}
+            geo_response = requests.request("POST", invoke_url_geo, headers=headers, data=geo_data)
+
+            invoke_url_user = "https://5i08sjvi96.execute-api.us-east-1.amazonaws.com/test/topics/12b287eedf6d.user"
+
+            user_data = json.dumps({
+                "records": [
+                    {
+                        "value": {"ind": user_result["ind"], "first_name": user_result["first_name"], "last_name": user_result["last_name"], 
+                                  "age": user_result["age"], "date_joined": user_result["date_joined"]
+                                  }
+                    }
+                ]
+            }, default=str)   
+
+            headers = {'Content-Type': 'application/vnd.kafka.json.v2+json'}
+            user_response = requests.request("POST", invoke_url_user, headers=headers, data=user_data)
+
             print(pin_response.status_code)
+            print(geo_response.status_code)
+            print(user_response.status_code)
 
 if __name__ == "__main__":
     run_infinite_post_data_loop()
