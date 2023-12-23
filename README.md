@@ -27,9 +27,7 @@ The second milestone was to import a python file into VSCode containing a script
 
 The third milestone was to connect to an MSK cluster and set up Kafka on a client EC2 instance.
 
-![](Documentation/3/1.png)
-
-- A key pair file was created locally in a linux directory `/home/nazwaz` as a `.pem` file in order to connect to the EC2 instance. The content of this key pair file was found by navigating to the parameter store and finding the specific key pair using the keypaird id 12b287eedf6d. By finding this, the value was copied including the `BEGIN` and `END` headers into the file and saved as `12b287eedf6d.pem`
+- A key pair file was created locally in a linux directory `/home/nazwaz` as a `.pem` file in order to connect to the EC2 instance. The content of this key pair file was found by navigating to the parameter store and finding the specific key pair. By finding this, the value was copied including the `BEGIN` and `END` headers into the file and saved as `12b287eedf6d.pem`
 
 ![](Documentation/3/2.png)
 
@@ -99,11 +97,22 @@ The fourth milestone was to connect the MSK cluster to an S3 bucket using MSK co
 
 ![](Documentation/4/5.png)
 
-- For the worker configuration, customised configuration was selected so the confluent-worker configuration set up earlier could be used and for the access permissions, the IAM role containing the user id `12b287eedf6d` was selected also. Once the connector had been created with the name `12b287eedf6d-connector`, it showed up as running in the connectors tab. 
+- For the worker configuration, customised configuration was selected so the confluent-worker configuration set up earlier could be used and for the access permissions, the IAM role containing the user id `12b287eedf6d` was selected also. Once the connector had been created with the name `12b287eedf6d-connector`, it showed up as running in the connectors tab. Now any data sent from the MSK cluster to the S3 bucket is uploaded into a folder called `topics`.
 
 ## Milestone 5 - Batch processing: Configuring API in API gateway
 
+
+
+
+
+
+
+
+
+
 ## Milestone 6 - Batch processing: Databricks
+
+
 
 ## Milestone 7 - Batch processing: Spark on Databricks
 
