@@ -286,7 +286,9 @@ display(popular_category_year_df)
 
 # COMMAND ----------
 
-# Combine pin and geo datadrames
+## MOST POPULAR USER IN EACH COUNTRY AND MOST POPULAR COUNTRY 
+
+# Combine pin and geo dataframes
 user_followers_country_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
 
 # Select columns to show, drop null value rows and duplicate rows and change order
@@ -300,5 +302,49 @@ display(country_most_followers_df)
 
 # COMMAND ----------
 
-user_followers_country_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
+## MOST POPULAR CATEGORY FOR DIFFERENT AGE GROUPS
+
+# Combine pin and user dataframes
+popular_category_age_df = cleaned_df_pin.join(cleaned_df_user, cleaned_df_user["ind"] == cleaned_df_pin["ind"], how="inner")
+
+# Creates age group column with conditionals for each age range
+popular_category_age_df = popular_category_age_df.withColumn("age_group", when(popular_category_age_df.age < 18, popular_category_age_df.age).when(popular_category_age_df.age <= 24, "18-24").when(popular_category_age_df.age <= 35, "25-35").when(popular_category_age_df.age <= 50, "36-50").otherwise("50+"))
+
+# Create window
+window = Window.partitionBy("age_group", "category")
+
+# Create category count column and select columns to show
+popular_category_age_df = popular_category_age_df.withColumn("category_count", count("category").over(window)).select("age_group", "category", "category_count")
+
+# Add column assigning row numbers to each unique category for each age group
+popular_category_age_df = popular_category_age_df.withColumn("row", row_number().over(window.orderBy("category_count")))
+
+# Filter rows so only rows with row number 1 remain and re order columns then drop row column
+popular_category_age_df = popular_category_age_df.filter(popular_category_age_df.row == 1).orderBy(["age_group", "category_count"], ascending = [True, False]).drop("row")
+
+display(popular_category_age_df)
+
+
+# COMMAND ----------
+
+## MEDIAN FOLLOWER COUNT FOR DIFFERENT AGE GROUPS
+
+# Combine pin and user dataframes
+popular_category_age_df = cleaned_df_pin.join(cleaned_df_user, cleaned_df_user["ind"] == cleaned_df_pin["ind"], how="inner")
+
+# Creates age group column with conditionals for each age range
+popular_category_age_df = popular_category_age_df.withColumn("age_group", when(popular_category_age_df.age < 18, popular_category_age_df.age).when(popular_category_age_df.age <= 24, "18-24").when(popular_category_age_df.age <= 35, "25-35").when(popular_category_age_df.age <= 50, "36-50").otherwise("50+"))
+
+
+result_df = popular_category_age_df.select("age_group", "follower_count")
+
+result_df = result_df.groupBy("age_group").agg(median("follower_count"))
+
+display(popular_category_age_df)
+display(result_df)
+
+
+
+# COMMAND ----------
+
 
