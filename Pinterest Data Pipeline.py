@@ -216,16 +216,69 @@ window = Window.partitionBy("country", "category")
 # Create category count column and select columns to show
 popular_category_country_df = popular_category_country_df.withColumn("category_count", count("category").over(window)).select("country", "category", "category_count")
 
-# Create another window for row number
-window = Window.partitionBy("country", "category").orderBy("category_count")
-
 # Add column assigning row numbers to each unique category within each country
-popular_category_country_df = popular_category_country_df.withColumn("row", row_number().over(window))
+popular_category_country_df = popular_category_country_df.withColumn("row", row_number().over(window.orderBy("category_count")))
 
-# Filter columns so only columns with row number 1 remain and re order columns then drop row column
+# Filter rows so only rows with row number 1 remain and re order columns then drop row column
 popular_category_country_df = popular_category_country_df.filter(popular_category_country_df.row == 1).orderBy(["country", "category_count", "category"], ascending = [True, False, True]).drop("row")
 
 display(popular_category_country_df)
+
+# COMMAND ----------
+
+# Combine pin and geo dataframes
+popular_category_year_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
+
+result_df = popular_category_year_df.select("timestamp", "category")
+
+dates = ("2018-01-01", "2022-12-31")
+
+result_df = result_df.filter(result_df.timestamp.between(*dates))
+
+result_df = result_df.select(year("timestamp").alias("post_year"), "category")
+
+# Create window
+window = Window.partitionBy("post_year", "category")
+
+# Create category count column
+result_df = result_df.withColumn("category_count", count("category").over(window))
+
+#Create another window for row number
+window = Window.partitionBy("post_year", "category").orderBy("category_count")
+
+#
+result_df = result_df.withColumn("row", row_number().over(window))
+
+#
+result_df = result_df.filter(result_df.row == 1).orderBy(["post_year", "category_count", "category"], ascending = [True, False, True]).drop("row")
+
+display(result_df)
+
+
+# COMMAND ----------
+
+# Combine pin and geo dataframes
+popular_category_year_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
+
+# Range of dates from 2018 to 2022 
+dates = ("2018-01-01", "2022-12-31")
+
+# Filter out timestamp column for dates between 2018 and 2022, renaming it as post year with just the year value and select columns to show
+popular_category_year_df = popular_category_year_df.filter(popular_category_year_df.timestamp.between(*dates)).select(year("timestamp").alias("post_year"), "category")
+
+# Create window
+window = Window.partitionBy("post_year", "category")
+
+# Create category count column
+popular_category_year_df = popular_category_year_df.withColumn("category_count", count("category").over(window))
+
+# Add column assigning row numbers to each unique category for each year
+popular_category_year_df = popular_category_year_df.withColumn("row", row_number().over(window.orderBy("category_count")))
+
+# Filter rows so only rows with row number 1 remain and re order columns then drop row column
+popular_category_year_df = popular_category_year_df.filter(popular_category_year_df.row == 1).orderBy(["post_year", "category_count", "category"], ascending = [True, False, True]).drop("row")
+
+display(popular_category_year_df)
 
 # COMMAND ----------
 
