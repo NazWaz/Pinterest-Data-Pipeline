@@ -1,6 +1,7 @@
 # Databricks notebook source
 # pyspark functions
 from pyspark.sql.functions import *
+from pyspark.sql.window import Window
 # URL processing
 import urllib
 
@@ -21,7 +22,7 @@ aws_keys_df = spark.read.format(file_type)\
 # COMMAND ----------
 
 # unmount bucket
-dbutils.fs.unmount("/mnt/MOUNT")
+# dbutils.fs.unmount("/mnt/MOUNT")
 
 # COMMAND ----------
 
@@ -63,10 +64,6 @@ display(df_pin)
 
 # COMMAND ----------
 
-cleaned_df_pin.printSchema()
-
-# COMMAND ----------
-
 # Replace empty and entries with no relevant data with null
 cleaned_df_pin = df_pin.replace({" " : None, "No description available Story format" : None, "Untitled" : None, "User Info Error" : None, "Image src error." : None, "multi-video(story page format)" : "video", "N,o, ,T,a,g,s, ,A,v,a,i,l,a,b,l,e" : None, "No Title Data Available" : None})
 
@@ -88,6 +85,10 @@ cleaned_df_pin = cleaned_df_pin.withColumnRenamed("index", "ind")
 # Reorder columns
 cleaned_df_pin = cleaned_df_pin.select("ind", "unique_id", "title", "description", "follower_count", "poster_name", "tag_list", "is_image_or_video", "image_src", "save_location", "category")
 
+
+# COMMAND ----------
+
+cleaned_df_pin.printSchema()
 
 # COMMAND ----------
 
@@ -166,6 +167,65 @@ cleaned_df_user.printSchema()
 # COMMAND ----------
 
 display(cleaned_df_user)
+
+# COMMAND ----------
+
+display(cleaned_df_pin)
+display(cleaned_df_geo)
+display(cleaned_df_user)
+
+# COMMAND ----------
+
+# Combine pin and geo dataframes
+popular_category_country_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
+
+# Create window
+window_spec = Window.partitionBy("country", "category")
+
+# Create category count column
+result_df = popular_category_country_df.withColumn("category_count", count("category").over(window_spec))
+
+# Drop other columns
+result_df = result_df.select("country", "category", "category_count")
+
+
+window = Window.partitionBy("country", "category").orderBy("category_count")
+new_df = result_df.withColumn("row", row_number().over(window))
+new_df = new_df.filter(new_df.row == 1)
+
+
+new_df = new_df.orderBy(["country", "category_count", "category"], ascending = [True, False, True])
+
+
+new_df = new_df.drop("row")
+
+display(popular_category_country_df)
+display(result_df)
+display(new_df)
+
+
+
+# COMMAND ----------
+
+# Combine pin and geo dataframes
+popular_category_country_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
+
+# Create window
+window = Window.partitionBy("country", "category")
+
+# Create category count column and select columns to show
+popular_category_country_df = popular_category_country_df.withColumn("category_count", count("category").over(window)).select("country", "category", "category_count")
+
+# Create another window for row number
+window = Window.partitionBy("country", "category").orderBy("category_count")
+
+# Add column assigning row numbers to each unique category within each country
+popular_category_country_df = popular_category_country_df.withColumn("row", row_number().over(window))
+
+# Filter columns so only columns with row number 1 remain and re order columns then drop row column
+popular_category_country_df = popular_category_country_df.filter(popular_category_country_df.row == 1).orderBy(["country", "category_count", "category"], ascending = [True, False, True]).drop("row")
+
+display(popular_category_country_df)
 
 # COMMAND ----------
 
