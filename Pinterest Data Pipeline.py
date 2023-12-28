@@ -207,6 +207,8 @@ display(new_df)
 
 # COMMAND ----------
 
+## MOST POPULAR CATEGORY IN EACH COUNTRY
+
 # Combine pin and geo dataframes
 popular_category_country_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
 
@@ -257,6 +259,8 @@ display(result_df)
 
 # COMMAND ----------
 
+## MOST POPULAR CATEGORY EACH YEAR (2018 - 2022)
+
 # Combine pin and geo dataframes
 popular_category_year_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
 
@@ -282,4 +286,19 @@ display(popular_category_year_df)
 
 # COMMAND ----------
 
+# Combine pin and geo datadrames
+user_followers_country_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
+
+# Select columns to show, drop null value rows and duplicate rows and change order
+user_followers_country_df = user_followers_country_df.select("country", "poster_name", "follower_count").na.drop().dropDuplicates(["country", "poster_name"]).orderBy(["country", "follower_count"], ascending = [True, False])
+
+# Group by country with the most followers for each country in descending order
+country_most_followers_df = user_followers_country_df.groupBy("country").agg(max("follower_count").alias("follower_count")).orderBy("follower_count", ascending = False)
+
+display(user_followers_country_df)
+display(country_most_followers_df)
+
+# COMMAND ----------
+
+user_followers_country_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
 
