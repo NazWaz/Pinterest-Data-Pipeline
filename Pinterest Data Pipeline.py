@@ -188,37 +188,6 @@ display(cleaned_df_user)
 
 # COMMAND ----------
 
-# Combine pin and geo dataframes
-popular_category_country_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
-
-# Create window
-window_spec = Window.partitionBy("country", "category")
-
-# Create category count column
-result_df = popular_category_country_df.withColumn("category_count", count("category").over(window_spec))
-
-# Drop other columns
-result_df = result_df.select("country", "category", "category_count")
-
-
-window = Window.partitionBy("country", "category").orderBy("category_count")
-new_df = result_df.withColumn("row", row_number().over(window))
-new_df = new_df.filter(new_df.row == 1)
-
-
-new_df = new_df.orderBy(["country", "category_count", "category"], ascending = [True, False, True])
-
-
-new_df = new_df.drop("row")
-
-display(popular_category_country_df)
-display(result_df)
-display(new_df)
-
-
-
-# COMMAND ----------
-
 ## MOST POPULAR CATEGORY IN EACH COUNTRY
 
 # Combine pin and geo dataframes
@@ -237,37 +206,6 @@ popular_category_country_df = popular_category_country_df.withColumn("row", row_
 popular_category_country_df = popular_category_country_df.filter(popular_category_country_df.row == 1).orderBy(["country", "category_count", "category"], ascending = [True, False, True]).drop("row")
 
 display(popular_category_country_df)
-
-# COMMAND ----------
-
-# Combine pin and geo dataframes
-popular_category_year_df = cleaned_df_pin.join(cleaned_df_geo, cleaned_df_geo["ind"] == cleaned_df_pin["ind"], how="inner")
-
-result_df = popular_category_year_df.select("timestamp", "category")
-
-dates = ("2018-01-01", "2022-12-31")
-
-result_df = result_df.filter(result_df.timestamp.between(*dates))
-
-result_df = result_df.select(year("timestamp").alias("post_year"), "category")
-
-# Create window
-window = Window.partitionBy("post_year", "category")
-
-# Create category count column
-result_df = result_df.withColumn("category_count", count("category").over(window))
-
-#Create another window for row number
-window = Window.partitionBy("post_year", "category").orderBy("category_count")
-
-#
-result_df = result_df.withColumn("row", row_number().over(window))
-
-#
-result_df = result_df.filter(result_df.row == 1).orderBy(["post_year", "category_count", "category"], ascending = [True, False, True]).drop("row")
-
-display(result_df)
-
 
 # COMMAND ----------
 
@@ -355,7 +293,7 @@ display(median_follower_age_df)
 
 # COMMAND ----------
 
-## NUMBER OF USERS JOINING EACH YEAR
+## NUMBER OF USERS JOINING EACH YEAR (2015 - 2020)
 
 # Range of dates from 2015 to 2020 
 dates = ("2015-01-01", "2020-12-31")
@@ -380,7 +318,7 @@ display(users_joining_df)
 
 # COMMAND ----------
 
-## MEDIAN FOLLOWER COUNT OF USERS BASED ON JOINING YEAR
+## MEDIAN FOLLOWER COUNT OF USERS BASED ON JOINING YEAR (2015 - 2020)
 
 # Combine pin and user dataframes
 median_follower_year_df = cleaned_df_pin.join(cleaned_df_user, cleaned_df_user["ind"] == cleaned_df_pin["ind"], how="inner")
@@ -399,7 +337,7 @@ display(median_follower_year_df)
 
 # COMMAND ----------
 
-## MEDIAN FOLLOWER COUNT OF USERS BASED ON AGE GROUP AND JOINING YEAR
+## MEDIAN FOLLOWER COUNT OF USERS BASED ON AGE GROUP AND JOINING YEAR (2015 - 2020)
 
 # Combine pin and user dataframes
 median_follower_age_year_df = cleaned_df_pin.join(cleaned_df_user, cleaned_df_user["ind"] == cleaned_df_pin["ind"], how="inner")
