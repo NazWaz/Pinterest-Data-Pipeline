@@ -22,7 +22,7 @@ aws_keys_df = spark.read.format(file_type)\
 # COMMAND ----------
 
 # unmount bucket
-# dbutils.fs.unmount("/mnt/MOUNT")
+dbutils.fs.unmount("/mnt/MOUNT")
 
 # COMMAND ----------
 
@@ -49,6 +49,8 @@ display(dbutils.fs.ls("/mnt/MOUNT/topics"))
 
 # COMMAND ----------
 
+## CREATES PIN DATAFRAME
+
 # File location and type
 # Asterisk(*) indicates reading all the content of the specified file that have .json extension
 file_location = "/mnt/MOUNT/topics/12b287eedf6d.pin/partition=0/*.json" 
@@ -63,6 +65,8 @@ df_pin = spark.read.format(file_type) \
 display(df_pin)
 
 # COMMAND ----------
+
+## CLEANS PIN DATAFRAME
 
 # Replace empty and entries with no relevant data with null
 cleaned_df_pin = df_pin.replace({" " : None, "No description available Story format" : None, "Untitled" : None, "User Info Error" : None, "Image src error." : None, "multi-video(story page format)" : "video", "N,o, ,T,a,g,s, ,A,v,a,i,l,a,b,l,e" : None, "No Title Data Available" : None})
@@ -96,6 +100,8 @@ display(cleaned_df_pin)
 
 # COMMAND ----------
 
+## CREATES GEO DATAFRAME
+
 # File location and type
 # Asterisk(*) indicates reading all the content of the specified file that have .json extension
 file_location = "/mnt/MOUNT/topics/12b287eedf6d.geo/partition=0/*.json" 
@@ -110,6 +116,8 @@ df_geo = spark.read.format(file_type) \
 display(df_geo)
 
 # COMMAND ----------
+
+## CLEANS GEO DATAFRAME
 
 # Create coordinates column containing an array of latitude and longitude
 cleaned_df_geo = df_geo.withColumn("coordinates", array("latitude", "longitude"))
@@ -133,6 +141,8 @@ display(cleaned_df_geo)
 
 # COMMAND ----------
 
+## CREATES USER DATAFRAME
+
 # File location and type
 # Asterisk(*) indicates reading all the content of the specified file that have .json extension
 file_location = "/mnt/MOUNT/topics/12b287eedf6d.user/partition=0/*.json" 
@@ -147,6 +157,8 @@ df_user = spark.read.format(file_type) \
 display(df_user)
 
 # COMMAND ----------
+
+## CLEANS USER DATAFRAME
 
 # Create user_name column by concatenating first and last names
 cleaned_df_user = df_user.withColumn("user_name", concat("first_name", "last_name"))
@@ -335,13 +347,10 @@ popular_category_age_df = cleaned_df_pin.join(cleaned_df_user, cleaned_df_user["
 # Creates age group column with conditionals for each age range
 popular_category_age_df = popular_category_age_df.withColumn("age_group", when(popular_category_age_df.age < 18, popular_category_age_df.age).when(popular_category_age_df.age <= 24, "18-24").when(popular_category_age_df.age <= 35, "25-35").when(popular_category_age_df.age <= 50, "36-50").otherwise("50+"))
 
-
-result_df = popular_category_age_df.select("age_group", "follower_count")
-
-result_df = result_df.groupBy("age_group").agg(median("follower_count"))
+# Creates a median follower count column after grouping by age group
+popular_category_age_df = popular_category_age_df.groupBy("age_group").agg(expr("percentile_approx(follower_count, 0.5)").alias("median_follower_count")).orderBy("age_group")
 
 display(popular_category_age_df)
-display(result_df)
 
 
 
