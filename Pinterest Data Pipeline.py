@@ -21,11 +21,6 @@ aws_keys_df = spark.read.format(file_type)\
 
 # COMMAND ----------
 
-# unmount bucket
-dbutils.fs.unmount("/mnt/MOUNT")
-
-# COMMAND ----------
-
 # Get the AWS access key and secret key from the spark dataframe
 ACCESS_KEY = aws_keys_df.select('Access key ID').collect()[0]['Access key ID']
 SECRET_KEY = aws_keys_df.select('Secret access key').collect()[0]['Secret access key']
@@ -63,6 +58,10 @@ df_pin = spark.read.format(file_type) \
 .load(file_location)
 # Display Spark dataframe to check its content
 display(df_pin)
+
+# COMMAND ----------
+
+df_pin.printSchema()
 
 # COMMAND ----------
 
@@ -356,6 +355,11 @@ median_follower_age_year_df = median_follower_age_year_df.groupBy("age_group", "
 
 display(median_follower_age_year_df)
 
+
+# COMMAND ----------
+
+# Unmount bucket
+dbutils.fs.unmount("/mnt/MOUNT")
 
 # COMMAND ----------
 
