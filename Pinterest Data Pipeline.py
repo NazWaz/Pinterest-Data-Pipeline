@@ -116,6 +116,10 @@ display(df_geo)
 
 # COMMAND ----------
 
+df_geo.printSchema()
+
+# COMMAND ----------
+
 ## CLEANS GEO DATAFRAME
 
 # Create coordinates column containing an array of latitude and longitude
@@ -154,6 +158,10 @@ df_user = spark.read.format(file_type) \
 .load(file_location)
 # Display Spark dataframe to check its content
 display(df_user)
+
+# COMMAND ----------
+
+df_user.printSchema()
 
 # COMMAND ----------
 

@@ -175,3 +175,209 @@ cleaned_df_pin.writeStream \
 
 # Deletes checkpoint folder
 dbutils.fs.rm("/tmp/kinesis/_checkpoints/", True)
+
+# COMMAND ----------
+
+## CREATES GEO DATAFRAME
+
+df_geo_data = spark \
+.readStream \
+.format('kinesis') \
+.option('streamName','streaming-12b287eedf6d-geo') \
+.option('initialPosition','earliest') \
+.option('region','us-east-1') \
+.option('awsAccessKey', ACCESS_KEY) \
+.option('awsSecretKey', SECRET_KEY) \
+.load()
+
+# Display dataframe
+display(df_geo_data)
+
+# COMMAND ----------
+
+df_geo = df_geo_data.selectExpr("CAST(data as STRING)")
+
+geo_schema = StructType([
+  StructField("country", StringType(), True),
+  StructField("ind", LongType(), True),
+  StructField("latitude", DoubleType(), True),
+  StructField("longitude", DoubleType(), True),
+  StructField("timestamp", StringType(), True)
+])
+
+df_geo = df_geo.select(from_json("data", geo_schema).alias("geo_data")).select("geo_data.*")
+
+display(df_geo)
+
+# COMMAND ----------
+
+## CLEANS GEO DATAFRAME
+
+# Create coordinates column containing an array of latitude and longitude
+cleaned_df_geo = df_geo.withColumn("coordinates", array("latitude", "longitude"))
+
+# Drop latitude and longitude columns
+cleaned_df_geo = cleaned_df_geo.drop ("latitude", "longitude")
+
+# Transform timestamp column data type to timestamp type
+cleaned_df_geo = cleaned_df_geo.withColumn("timestamp", to_timestamp("timestamp"))
+
+# Reorder columns
+cleaned_df_geo = cleaned_df_geo.select("ind", "country", "coordinates", "timestamp")
+
+display(cleaned_df_geo)
+
+# COMMAND ----------
+
+## READS GEO DATA
+
+df_geo_data = spark \
+.readStream \
+.format('kinesis') \
+.option('streamName','streaming-12b287eedf6d-geo') \
+.option('initialPosition','earliest') \
+.option('region','us-east-1') \
+.option('awsAccessKey', ACCESS_KEY) \
+.option('awsSecretKey', SECRET_KEY) \
+.load()
+
+## CREATES GEO DATAFRAME
+
+df_geo = df_geo_data.selectExpr("CAST(data as STRING)")
+
+geo_schema = StructType([
+  StructField("country", StringType(), True),
+  StructField("ind", LongType(), True),
+  StructField("latitude", DoubleType(), True),
+  StructField("longitude", DoubleType(), True),
+  StructField("timestamp", StringType(), True)
+])
+
+df_geo = df_geo.select(from_json("data", geo_schema).alias("geo_data")).select("geo_data.*")
+
+## CLEANS GEO DATAFRAME
+
+# Create coordinates column containing an array of latitude and longitude
+cleaned_df_geo = df_geo.withColumn("coordinates", array("latitude", "longitude"))
+
+# Drop latitude and longitude columns
+cleaned_df_geo = cleaned_df_geo.drop ("latitude", "longitude")
+
+# Transform timestamp column data type to timestamp type
+cleaned_df_geo = cleaned_df_geo.withColumn("timestamp", to_timestamp("timestamp"))
+
+# Reorder columns
+cleaned_df_geo = cleaned_df_geo.select("ind", "country", "coordinates", "timestamp")
+
+## WRITES CLEANED GEO DATA
+
+cleaned_df_geo.writeStream \
+  .format("delta") \
+  .outputMode("append") \
+  .option("checkpointLocation", "/tmp/kinesis/_checkpoints/") \
+  .table("12b287eedf6d_geo_table")
+
+# COMMAND ----------
+
+## READS USER DATA
+
+df_user_data = spark \
+.readStream \
+.format('kinesis') \
+.option('streamName','streaming-12b287eedf6d-user') \
+.option('initialPosition','earliest') \
+.option('region','us-east-1') \
+.option('awsAccessKey', ACCESS_KEY) \
+.option('awsSecretKey', SECRET_KEY) \
+.load()
+
+# Display dataframe
+display(df_user_data)
+
+# COMMAND ----------
+
+df_user = df_user_data.selectExpr("CAST(data as STRING)")
+
+user_schema = StructType([
+  StructField("age", LongType(), True),
+  StructField("date_joined", StringType(), True),
+  StructField("first_name", StringType(), True),
+  StructField("ind", LongType(), True),
+  StructField("last_name", StringType(), True)
+])
+
+df_user = df_user.select(from_json("data", user_schema).alias("user_data")).select("user_data.*")
+
+display(df_user)
+
+# COMMAND ----------
+
+## CLEANS USER DATAFRAME
+
+# Create user_name column by concatenating first and last names
+cleaned_df_user = df_user.withColumn("user_name", concat("first_name", "last_name"))
+
+# Drop first and last name columns
+cleaned_df_user = cleaned_df_user.drop("first_name", "last_name")
+
+# Convert date_joined date type to timestamp
+cleaned_df_user = cleaned_df_user.withColumn("date_joined", to_timestamp("date_joined"))
+
+# Reorder columns
+cleaned_df_user = cleaned_df_user.select("ind", "user_name", "age", "date_joined")
+
+display(cleaned_df_user)
+
+# COMMAND ----------
+
+## READS USER DATA
+
+df_user_data = spark \
+.readStream \
+.format('kinesis') \
+.option('streamName','streaming-12b287eedf6d-user') \
+.option('initialPosition','earliest') \
+.option('region','us-east-1') \
+.option('awsAccessKey', ACCESS_KEY) \
+.option('awsSecretKey', SECRET_KEY) \
+.load()
+
+## CREATES USER DATAFRAME
+
+df_user = df_user_data.selectExpr("CAST(data as STRING)")
+
+user_schema = StructType([
+  StructField("age", LongType(), True),
+  StructField("date_joined", StringType(), True),
+  StructField("first_name", StringType(), True),
+  StructField("ind", LongType(), True),
+  StructField("last_name", StringType(), True)
+])
+
+df_user = df_user.select(from_json("data", user_schema).alias("user_data")).select("user_data.*")
+
+## CLEANS USER DATAFRAME
+
+# Create user_name column by concatenating first and last names
+cleaned_df_user = df_user.withColumn("user_name", concat("first_name", "last_name"))
+
+# Drop first and last name columns
+cleaned_df_user = cleaned_df_user.drop("first_name", "last_name")
+
+# Convert date_joined date type to timestamp
+cleaned_df_user = cleaned_df_user.withColumn("date_joined", to_timestamp("date_joined"))
+
+# Reorder columns
+cleaned_df_user = cleaned_df_user.select("ind", "user_name", "age", "date_joined")
+
+## WRITES CLEANED USER DATA
+
+cleaned_df_user.writeStream \
+  .format("delta") \
+  .outputMode("append") \
+  .option("checkpointLocation", "/tmp/kinesis/_checkpoints/") \
+  .table("12b287eedf6d_user_table")
+
+# COMMAND ----------
+
+
