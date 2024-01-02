@@ -101,21 +101,99 @@ The fourth milestone was to connect the MSK cluster to an S3 bucket using MSK co
 
 ## Milestone 5 - Batch processing: Configuring API in API gateway
 
+The fifth milestone was to build an API to send data to the MSK cluster and store it in the S3 bucket. The API itself was already created and provided so the resources and methods needed to be added.
 
+![](Documentation/5/1.png)
 
+- Using the API gateway, the API with the name `12b287eedf6d` was located and a `{proxy+}` resource was created. This proxy resource with the `ANY` method allows the integration access to all available resources because of the greedy parameter `{proxy+}`
 
+![](Documentation/5/2.png)
 
+- A HTTP `ANY` method was created with the endpoint url `http://ec2-54-81-124-13.compute-1.amazonaws.com:8082/{proxy}` which used the public DNS from the EC2 instance previously created.
 
+![](Documentation/5/3.png)
 
+- Once the proxy resource and `ANY` method was added to the API, it was then deployed with a stage name `test`. The invoke url `https://5i08sjvi96.execute-api.us-east-1.amazonaws.com/test` was important when communicating with the API later on.
 
+![](Documentation/5/4.png)
 
+- In order to consume the data using MSK from the API, a REST proxy packaged needed to be installed on the EC2 client, to communicate with the MSK cluster. `sudo wget https://packages.confluent.io/archive/7.2/confluent-7.2.0.tar.gz` was used to download the package and `tar -xvzf confluent-7.2.0.tar.gz` extracted the zip file, creating the `confluent-7.2.0` directory.
+
+![](Documentation/5/5.png)
+
+- The `kafka-rest.properties` file within the directory `confluent-7.2.0/etc/kafka-rest` needed to be modified to perform IAM authentication. The correct Booststrap server and Plaintext Apache Zookeeper connection strings were added in here along with the IAM MSK authentication package to allow communication between the REST proxy and the cluster brokers.
+
+![](Documentation/5/6.png)
+
+- The REST proxy had to be started before sending any messages to the API to make sure they are consumed in MSK. This was done in the `confluent-7.2.0/bin` directory using the command `./kafka-rest-start /home/ec2-user/confluent-7.2.0/etc/kafka-rest/kafka-rest.properties`. Once the proxy is ready to receive requests, the message `INFO Server started, listening for requests` could be seen.
+
+![](Documentation/5/7.png)
+
+- The `user_posting_emulation.py` file was modified to send data to the Kafka topics using the previously acquired API invoke url. Here, the invoke url was customised to set the destination to `12b287eedf6d.pin` within the topics folder in the S3 bucket. `json.dumps` was used to serialise the data from the `pin` table into a json file with the structure defined and the key value pairs being the header names and the records under each heading. 
+
+![](Documentation/5/8.png)
+
+- The data from the `geo` table was instead stored in `12b287eedf6d.geo`, also within the topics folder. As the records within this table were different, each individual key value pair had to be identified to ensure the data was serialised correctly. `default=str` was also passed through here to ensure the timestamps were converted to strings before being converted into a json file.
+
+![](Documentation/5/9.png)
+
+- The data from the `user` table was stored in `12b287eedf6d.user` similarly to before.
+
+![](Documentation/5/10.png)
+
+- By printing the status code, the success of the requests could be monitored. A code of 200 indicated that the POST requests were successful.
+
+![](Documentation/5/11.png)
+
+- The REST proxy showed each request being sent to the API aswell as the destination for the data.
+
+![](Documentation/5/12.png)
+
+- Kafka consumers could also be created within the EC2 client to monitor the data being sent. Using `./kafka-console-consumer.sh --bootstrap-server b-1.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098,b-2.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098,b-3.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098 --group students --consumer.config client.properties --topic 12b287eedf6d.pin --from-beginning ` a consumer for the `pin` data was made. The Bootstrap server was used here again, aswell as the flags `--group students`, `--from beginning` and `--confumer.config client.properties` to ensure all the data could be seen in the consumer and that the correct permissions were being used.
+
+![](Documentation/5/13.png)
+
+- A consumer for the `geo` data was made using `./kafka-console-consumer.sh --bootstrap-server b-1.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098,b-2.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098,b-3.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098 --group students --consumer.config client.properties --topic 12b287eedf6d.geo --from-beginning`.
+
+![](Documentation/5/14.png)
+
+- A consumer for the `user` data was made using `./kafka-console-consumer.sh --bootstrap-server b-1.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098,b-2.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098,b-3.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098 --group students --consumer.config client.properties --topic 12b287eedf6d.user --from-beginning`
+
+![](Documentation/5/15.png)
+
+- The data could also be checked and monitored within the S3 bucket. A topics folder was now present containing folders for all three topics.
+
+![](Documentation/5/16.png)
+
+- Within each topic folder was a partition containing all the data records as json files.
 
 ## Milestone 6 - Batch processing: Databricks
 
 
 
+
+
+
+
 ## Milestone 7 - Batch processing: Spark on Databricks
 
+
+
+
+
+
+
+
 ## Milestone 8 - Batch processing: AWS MWAA
+
+
+![](Documentation/8/1.png)
+
+![](Documentation/8/2.png)
+
+![](Documentation/8/3.png)
+
+![](Documentation/8/4.png)
+
 
 ## Milestone 9 - Stream processing: AWS Kinesis
