@@ -195,11 +195,85 @@ The sixth milestone was to set up Databricks and mount the S3 bucket to Databric
 
 ## Milestone 7 - Batch processing: Spark on Databricks
 
+The seventh milestone was to perform several data cleaning operations and computations on each of the Databricks dataframes using Spark.
 
+![](Documentation/7/1.png)
 
+- First the `df_pin` dataframe containing the information about Pinterest posts was cleaned. As there were many entries with either no or irrelevant data, they were all replaced with null values using `.replace()` with a dictionary of key value pairs. Each key referred to what was going to be replaced within all columns of the dataframe and the value was `None` which would return `null`.
 
+- The `follower_count` column contained letters such as k and M to represent thousand and million so `.withcolumn()` was used to replace this column along with `regexp_replace()` to find these characters and replace them with zeroes.
 
+- The `follower_count` column was still a `string` data type so using `.withColumn()` together with `.cast()` the data type was changed to `integer`.
 
+- The path in the `save_location` column was cleaned using `regexp_replace()` again to only include the save location path.
+
+- The `index` column was renamed to `ind` using `.withColumNRenamed()`.
+
+- Finally, all of the columns were reordered using `.select()` with the column names listed in order.
+
+![](Documentation/7/2.png)
+
+- Next the `df_geo` dataframe containing the information about geolocation was cleaned. 
+
+- A new column `coordinates` was created using `.withColumn()` along with `array()` to combine the `latitude` and `longitude` columns into an array.
+
+- These `latitude` and `longitude` columns were then dropped using `.drop()`.
+
+- The `timestamp` column was also still a `string` data tpye so it was changed to a `timestamp` type using `.withColumn()` together with `to_timestamp()`.
+
+- Finally, the columns were reordered.
+
+![](Documentation/7/3.png)
+
+- Lastly the `df_user` dataframe containing the information about users was cleaned.
+
+- A new column `user_name` was created using `.withColumn` and `concat()` to concatenate the records from both `first_name` and `last_name` columns into one.
+
+- These `first_name` and `last_name` columsn were then dropped.
+
+- The `date_joined` column also needed the data type changed from `string` to `timestamp`.
+
+- Finally, the columns were reordered.
+
+![](Documentation/7/4.png)
+
+- This query was to find the most popular category in each country.
+
+- The `pin` and `geo` dataframes were combined using an `inner` join based on the common column `ind`.
+
+- A window 
+
+![](Documentation/7/5.png)
+
+- 
+
+![](Documentation/7/6.png)
+
+- 
+
+![](Documentation/7/7.png)
+
+- 
+
+![](Documentation/7/8.png)
+
+- 
+
+![](Documentation/7/9.png)
+
+- 
+
+![](Documentation/7/10.png)
+
+- 
+
+![](Documentation/7/11.png)
+
+- 
+
+![](Documentation/7/12.png)
+
+- 
 
 
 ## Milestone 8 - Batch processing: AWS MWAA
