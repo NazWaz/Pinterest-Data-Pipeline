@@ -169,11 +169,29 @@ The fifth milestone was to build an API to send data to the MSK cluster and stor
 
 ## Milestone 6 - Batch processing: Databricks
 
+The sixth milestone was to set up Databricks and mount the S3 bucket to Databricks. The AWS access and secret access keys did not need to be created at this stage as the account being used had already been granted all the neccessary permissions and full access, with the credentials uploaded into a csv file.
 
+![](Documentation/6/1.png)
 
+![](Documentation/6/2.png)
 
+- The libraries for pyspark operations were imported and the csv file `authentication_credentials.csv` containing the AWS keys was read to Databricks into a spark dataframe using `spark.read()`.
 
+![](Documentation/6/3.png)
 
+- The access and secret access keys were extracted from the spark dataframe and every character of the secret access key was encoded even using `urllib.parse.quote()` for added security. 
+
+![](Documentation/6/4.png)
+
+- Finally the S3 bucket was mounted using the S3 URL and the mount name `MOUNT` using `dbutils.fs.mount()`.
+
+![](Documentation/6/5.png)
+
+![](Documentation/6/6.png)
+
+![](Documentation/6/7.png)
+
+- The three dataframes `df_pin`, `df_geo` and `df_user` could then be created using the jsons from the S3 bucket. The file path to these json objects is given as the path added on to the mount path and again using `spark.read()`, each dataframe is created. There is no custom schema i.e. Spark infers the structure of the dataframe when mapping the json files into the dataframes.
 
 ## Milestone 7 - Batch processing: Spark on Databricks
 
