@@ -241,40 +241,91 @@ The seventh milestone was to perform several data cleaning operations and comput
 
 - The `pin` and `geo` dataframes were combined using an `inner` join based on the common column `ind`.
 
-- A window 
+- A window was created on this new dataframe using the `Window` class to specify columns to partition and order by. Here, the window was partitioned by the `country` column first using `.partitionBy` and then by the `category` column.
+
+- The `count().over()` function was applied on this window using `.withColumn` to create a new column called `category_count` which contained the number of elements in each group i.e. the total number of categories for each country. The columns were then filtered again using `.select()`
+
+- Another column `row` was added to assign a row number to each unique category within each country (window) using `.withColumn` and `row_number().over()` but this time the window was ordered by the `category_count` column. 
+
+- The duplicate `category_count` rows could be eliminated now by only keeping the records which had a `row` number equal to 1 using `.filter`. The data was reordered using `.orderBy` and finally the `row` column was removed.
 
 ![](Documentation/7/5.png)
 
-- 
+- This query was to find the most popular category each year.
+
+- The `pin` and `geo` dataframes were combined using an `inner` join based on the common column `ind`.
+
+- The `dates` variable was created and assigned dates between the started of 2018 and the end of 2022 as this was the range of dates to filter data between. Using `.between` and `.select(year())`, the dates were selected from the `timestamp column` and only the value of the year was taken. This column was named `post_year` using `.alias()`.
+
+- A window was created and partitioned by `post_year` and `category`. 
+
+- The `category_count()` column was created again using the window and `row_number()` functions.
 
 ![](Documentation/7/6.png)
 
-- 
+- This query was to find the most popular user in each country and furthermore the most popular country.
+
+- The `pin` and `user` dataframes were combined using an `inner` join based on the common column `ind`.
+
+- The `country`, `poster_name` and `follower_count` columns were selected and any null or duplicate values were dropped using `.na.drop().dropDuplicates` in the `country` and `poster_name` columns. 
+
+- The dataframe was reordered using `.groupBy` to order the rows using the `country` column before finding the rows with the highest `follower_count` for each country using `.agg(max())`. Then it was reordered by `follower_count` starting with the most popular countries.
 
 ![](Documentation/7/7.png)
 
-- 
+- This query was to find the most popular category for different age groups. 
+
+- The `pin` and `geo` dataframes were combined using an `inner` join based on the common column `ind`.
+
+- The `age_group` column was created using `.withColumn()` and `.when()` and `.otherwise` conditional clauses to define what the name of the of row should be if the value is within a certain range i.e. if the `age` value was less than or equal to 24, it would be replaced with "18-24".
+
+- A window was created and partitioned by `age_group` and `category`.
+
+- The `category_count` column was created again using the window and `row_number()` functions. 
 
 ![](Documentation/7/8.png)
 
-- 
+- This query was to find the median follower count for different age groups.
+
+- The `pin` and `user` dataframes were combined using an `inner` join based on the common column `ind`.
+
+- The `age_group` column was created again.
+
+- The median of the `follower_count` column was found by grouping the dataframe by `age_group` and using `.agg(expr())` together with the expression `"percentile_approx()"` to create a column naming it `median_follower_count`. 
 
 ![](Documentation/7/9.png)
 
-- 
+- This query was to find the number of users that joined each year.
+
+- The `dates` variable was used to create a range of dates between 2015 and 2020 in order to find how many users joined each year during this time period.
+
+- Only the year was taken from the `date_joined` column and created into a new column called `post_year`.
+
+- A window was created and partitioned by `post_year`.
+
+- The `number_users_joined` column was created using the window and `row_number()` functions.
 
 ![](Documentation/7/10.png)
 
-- 
+- This query was to find the median follower count of users based on their joining year.
+
+- The `pin` and `user` dataframes were combined using an `inner` join based on the common column `ind`.
+
+- The `dates` variable was created to create the `post_year` column. After grouping the dataframe by `post_year`, the median could be found using `.agg(expr())` again to return the median values within the column `median_follower_count`. 
 
 ![](Documentation/7/11.png)
 
-- 
+- This query was to find the median follower count of users based on both their joining year and age group.
+
+- The `pin` and `user` dataframes were combined using an `inner` join based on the common column `ind`.
+
+- The `age_group` column was created using `.withColumn()` together with `.when()` and `.otherwise()` similarly to before.
+
+- This time, before finding the median, the dataframe was grouped by the `age_group` first and then the `post_year` to create the `median_follower_count` column.
 
 ![](Documentation/7/12.png)
 
-- 
-
+- To unmount the bucket `dbutils.ds.unmount()` was used. This command was neccessary at the end every time because later the whole workbook would be run automatically and the bucket wouldnt be able to mount without being unmounted at the end each time.
 
 ## Milestone 8 - Batch processing: AWS MWAA
 
