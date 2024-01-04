@@ -329,17 +329,22 @@ The seventh milestone was to perform several data cleaning operations and comput
 
 ## Milestone 8 - Batch processing: AWS MWAA
 
-This milestone was orchestrate Databricks workloads onf AWS MWAA.
-
-
+The eigth milestone was to use AWS MWAA (Managed Workflows for Apache Airflow) for an airflow environment to then create a DAG (Directed Acyclic Graph) to run the Pinterest Databricks notebook made earlier. The AWS provided already had access to a MWAA environment and to a dedicated S3 bucket `mwaa-dags-bucket` so creating the Databricks API token to connect MWAA and Databricks and create the `requirements.txt` file was not needed.
 
 ![](Documentation/8/1.png)
 
-![](Documentation/8/2.png)
-
-![](Documentation/8/3.png)
+- The airflow DAG was made in VSCode using python. Various parameters were passed through to ensure it runs on a specific schedule as well as how often it should run/retry if the process failed. The `notebook_path` was given as the path to the Databricks notebook which was to be run from start to finish. The DAG was also named as `12b287eedf6d_dag`.
 
 ![](Documentation/8/4.png)
 
+- This DAG was then uploaded to the designated S3 bucket so that it could then be accessed within the airflow UI.
+
+![](Documentation/8/3.png)
+
+![](Documentation/8/2.png)
+
+- The DAG was triggered manually in order to check that it ran successfully which it did after an intial failure.
 
 ## Milestone 9 - Stream processing: AWS Kinesis
+
+- The ninth milestone was to 
