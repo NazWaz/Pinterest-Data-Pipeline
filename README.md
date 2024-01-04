@@ -237,6 +237,8 @@ The seventh milestone was to perform several data cleaning operations and comput
 
 ![](Documentation/7/4.png)
 
+![](Documentation/7/13.png)
+
 - This query was to find the most popular category in each country.
 
 - The `pin` and `geo` dataframes were combined using an `inner` join based on the common column `ind`.
@@ -251,6 +253,8 @@ The seventh milestone was to perform several data cleaning operations and comput
 
 ![](Documentation/7/5.png)
 
+![](Documentation/7/14.png)
+
 - This query was to find the most popular category each year.
 
 - The `pin` and `geo` dataframes were combined using an `inner` join based on the common column `ind`.
@@ -263,6 +267,8 @@ The seventh milestone was to perform several data cleaning operations and comput
 
 ![](Documentation/7/6.png)
 
+![](Documentation/7/15.png)
+
 - This query was to find the most popular user in each country and furthermore the most popular country.
 
 - The `pin` and `user` dataframes were combined using an `inner` join based on the common column `ind`.
@@ -272,6 +278,8 @@ The seventh milestone was to perform several data cleaning operations and comput
 - The dataframe was reordered using `.groupBy` to order the rows using the `country` column before finding the rows with the highest `follower_count` for each country using `.agg(max())`. Then it was reordered by `follower_count` starting with the most popular countries.
 
 ![](Documentation/7/7.png)
+
+![](Documentation/7/16.png)
 
 - This query was to find the most popular category for different age groups. 
 
@@ -285,6 +293,8 @@ The seventh milestone was to perform several data cleaning operations and comput
 
 ![](Documentation/7/8.png)
 
+![](Documentation/7/17.png)
+
 - This query was to find the median follower count for different age groups.
 
 - The `pin` and `user` dataframes were combined using an `inner` join based on the common column `ind`.
@@ -294,6 +304,8 @@ The seventh milestone was to perform several data cleaning operations and comput
 - The median of the `follower_count` column was found by grouping the dataframe by `age_group` and using `.agg(expr())` together with the expression `"percentile_approx()"` to create a column naming it `median_follower_count`. 
 
 ![](Documentation/7/9.png)
+
+![](Documentation/7/18.png)
 
 - This query was to find the number of users that joined each year.
 
@@ -307,6 +319,8 @@ The seventh milestone was to perform several data cleaning operations and comput
 
 ![](Documentation/7/10.png)
 
+![](Documentation/7/19.png)
+
 - This query was to find the median follower count of users based on their joining year.
 
 - The `pin` and `user` dataframes were combined using an `inner` join based on the common column `ind`.
@@ -314,6 +328,8 @@ The seventh milestone was to perform several data cleaning operations and comput
 - The `dates` variable was created to create the `post_year` column. After grouping the dataframe by `post_year`, the median could be found using `.agg(expr())` again to return the median values within the column `median_follower_count`. 
 
 ![](Documentation/7/11.png)
+
+![](Documentation/7/20.png)
 
 - This query was to find the median follower count of users based on both their joining year and age group.
 
@@ -347,4 +363,124 @@ The eigth milestone was to use AWS MWAA (Managed Workflows for Apache Airflow) f
 
 ## Milestone 9 - Stream processing: AWS Kinesis
 
-- The ninth milestone was to 
+- The ninth milestone was to send the Pinterest data instead to AWS Kinesis as data streams and then read and save this data within Databricks while it was streaming instead. 
+
+![](Documentation/9/1.png)
+
+- Three streams were set up using AWS Kinesis and called `streaming-12b287eedf6d-pin`, `streaming-12b287eedf6d-geo` and `streaming-12b287eedf6d-user`. 
+
+![](Documentation/9/2.png)
+
+- The REST API from earlier was configured to allow for Kinesis actions such as listing, creating, describing, deleting streams as well as adding records to streams by creating new resources and methods. The `streams` resource was created with the `GET` method to perform the Kinesis `ListStreams` action.
+
+![](Documentation/9/3.png)
+
+- Several settings were customised within the `integration type` tab including the aws region to be `us-east-1`, the AWS service as `Kinesis`, the HTTP method as `POST`, the action type as `User action name`, the action type as `ListStreams` and the execution role as `arn:aws:iam::584739742957:role/12b287eedf6d-kinesis-access-role`. This execution role was the ARN of the Kinesis Access Role and was used for every method from here on.
+
+![](Documentation/9/4.png)
+
+- Within the `integration request` tab, a header `application/x-amz-json-1.1` was added with the header type `Content-Type`. A  mapping template `{}` was added with the content type as `application/json`. 
+
+![](Documentation/9/5.png)
+
+- Under the `streams` resource a new child resource `{stream-name}` was added with a `GET`, `POST` and `DELETE` method.
+
+![](Documentation/9/6.png)
+
+- The `GET` method was created the same as before except this time with the action type as `DescribeStream` and a different mapping template. This template takes an input from an API request and outputs the `StreamName` based on the information provided in the request, which is expected to contain the stream name. `$input` represents the input payload received by the API while `params()` finds the value of the `stream-name` parameter.
+
+![](Documentation/9/7.png)
+
+- The `POST` method was created with the action type as `CreateStream` and a different mapping template. This template checks if the `ShardCount` field is empty within the input payload using a conditional and if it is it sets it to 5. If not it retrieves and outputs the value of `ShardCount` to what was received and the `StreamName` is found like before.
+
+![](Documentation/9/8.png)
+
+- The `DELETE` method was created with the action type as `DeleteStream` and had the same mapping template as the `GET` method earlier to find the `StreamName`.
+
+![](Documentation/9/9.png)
+
+- Two more child resources were added under `{stream-name}` called `record` and `records` and a `PUT` method was created for each resource. The first `PUT` method was created with the action type as `PutRecord` and a different mapping template. This template transforms the input payload sent to the API into the neccessary format to write a record to the AWS Kinesis streams. The `StreamName` is found like before. The `Data` field takes the `Data` value from the input and encodes it in a Base64 format using `$util.base64Encode()` because records could only be written to a Kinsesis stream in this format. Finally, the `PartitionKey` field takes the input value of the `PartitionKey`.
+
+![](Documentation/9/10.png)
+
+- The second `PUT` method was created with the action type as `PutRecords` with a different mapping template. This template instead allows for writing multiple records into the AWS Kinesis streams. An array called `Records` is used this time where a `for` loop iterates over each `record` within the array, encoding the `Data` and finding the `PartitionKey`. A conditional statement is added at the end of the loop to add a comma after each record except the final record to keep the keep the output JSON formatted correctly.
+
+![](Documentation/9/11.png)
+
+- 
+
+![](Documentation/9/12.png)
+
+- 
+
+![](Documentation/9/13.png)
+
+- 
+
+![](Documentation/9/14.png)
+
+- 
+
+![](Documentation/9/15.png)
+
+- 
+
+![](Documentation/9/16.png)
+
+- 
+
+![](Documentation/9/17.png)
+
+- 
+
+![](Documentation/9/18.png)
+
+- 
+
+![](Documentation/9/19.png)
+
+- 
+
+![](Documentation/9/20.png)
+
+- 
+
+![](Documentation/9/21.png)
+
+- 
+
+![](Documentation/9/22.png)
+
+- 
+
+![](Documentation/9/23.png)
+
+- 
+
+![](Documentation/9/24.png)
+
+- 
+
+![](Documentation/9/25.png)
+
+- 
+
+![](Documentation/9/26.png)
+
+- 
+
+![](Documentation/9/27.png)
+
+- 
+
+![](Documentation/9/28.png)
+
+- 
+
+![](Documentation/9/29.png)
+
+- 
+
+![](Documentation/9/30.png)
+
+- 
