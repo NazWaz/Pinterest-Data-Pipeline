@@ -329,6 +329,9 @@ The seventh milestone was to perform several data cleaning operations and comput
 
 ## Milestone 8 - Batch processing: AWS MWAA
 
+This milestone was orchestrate Databricks workloads onf AWS MWAA.
+
+
 
 ![](Documentation/8/1.png)
 
