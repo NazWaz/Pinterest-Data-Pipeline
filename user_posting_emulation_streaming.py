@@ -1,6 +1,3 @@
-#%% 
-!pip install pymysql
-#%%
 import requests
 from time import sleep
 import random
@@ -10,14 +7,35 @@ import json
 import sqlalchemy
 from sqlalchemy import text
 import datetime
-
 import json
 
 random.seed(100)
-
 class AWSDBConnector:
+    '''
+    A connector to an AWS database containing Pinterest data.
 
+    Attributes:
+    ----------
+    HOST: str
+        The host url.
+    USER : str
+        The username needed to access the database.
+    PASSWORD : str
+        The user's password needed to access the database.
+    DATABASE: str
+        The name of the database.
+    PORT: int
+        The port number.
+
+    Methods:
+    -------
+    create_db_connector
+        Creates connection to the AWS database containing pinterest post and user data.
+    '''
     def __init__(self):
+        '''
+        Constructs all the neccessary attributes for the AWSDBConnector object.
+        '''
 
         self.HOST = "pinterestdbreadonly.cq2e8zno855e.eu-west-1.rds.amazonaws.com"
         self.USER = 'project_user'
@@ -26,12 +44,23 @@ class AWSDBConnector:
         self.PORT = 3306
         
     def create_db_connector(self):
+        '''
+        Uses the database type (mysql) and database api (pymysql) along with the previous attributes (host, user, password, database and port)
+        together to create a connection to an AWS database containing Pinterest data.
+        '''
+        
         engine = sqlalchemy.create_engine(f"mysql+pymysql://{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DATABASE}?charset=utf8mb4")
         return engine
 
 new_connector = AWSDBConnector()
 
 def run_infinite_post_data_loop():
+    '''
+    Runs an infinite post data loop to continuously receive and output data into three tables.
+    These tables are then output as three dictionaries of key value pairs with the headings as the key and the data as the values.
+    Then sends this data to an API, using an invoke url through a PUT request, to send the data to three AWS Kinesis streams. 
+    '''
+
     while True:
         sleep(random.randrange(0, 2))
         random_row = random.randint(0, 11000)
@@ -110,6 +139,3 @@ def run_infinite_post_data_loop():
 
 if __name__ == "__main__":
     run_infinite_post_data_loop()
-    
-    
-# %%

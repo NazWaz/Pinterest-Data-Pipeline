@@ -407,80 +407,71 @@ The eigth milestone was to use AWS MWAA (Managed Workflows for Apache Airflow) f
 
 ![](Documentation/9/11.png)
 
-- 
-
 ![](Documentation/9/12.png)
-
-- 
+- Once the API had been fully updated, it was deployed again as a stage `test` and data needed to be sent now to the API. The previous script to send data to the MSK cluster was updated to instead send data using the API to the three AWS Kinesis streams.
 
 ![](Documentation/9/13.png)
 
-- 
+- The invoke url was updated with a new path this time to the `record` resource, because this script was designed to add one record at a time to each stream. This meant that the type of request being sent had to be a `PUT` request instead. The structure of the `pin_data` had to be altered to send JSON messages in a way that can be recognised by the API, according to the template made within the `record` resource. The `StreamName` was specified as `streaming-12b287eedf6d-pin` aswell as the `Content-Type` as `application/json`.
 
 ![](Documentation/9/14.png)
 
-- 
+- The `geo_data` structure was similar with the `StreamName` as `streaming-12b287eedf6d-geo` and different invoke url instead.
 
 ![](Documentation/9/15.png)
 
-- 
+- The `user_data` structure was also similar with the `StreamName` as `streaming-12b287eedf6d-user` and different invoke url instead. 
 
 ![](Documentation/9/16.png)
 
-- 
+- Once the script was run, a response code of 200 was shown to indicate that data was being sent succefully to the streams. Each record of data could be checked within the Kinesis Console. This was done by selecting the shard `shardId-000000000000`, the first shard as data is normally stored here. For the starting position, `At timestamp` was selected giving an approximate time of when the script was run. This then provided a list of all of the records sent to the stream as the data is being sent.
 
 ![](Documentation/9/17.png)
 
-- 
-
-![](Documentation/9/18.png)
-
-- 
-
-![](Documentation/9/19.png)
-
-- 
-
 ![](Documentation/9/20.png)
 
-- 
+- Now that data was being injested into the AWS Kinesis data streams, it was ready to be read into Databricks. The ccommand `spark.readStream` was used with several arguments passed through including the `format` as `kinesis`, the `streamName`, the `intialPosition`, the `region` and again the `awsAccessKey` and `awsSecretKey` which were extracted like before. This command ran continously to return a dataframe with the columns `partitionKey`, `data`, `stream`, `shardId`, `sequenceNumber` and `approximateArrivalTimestamp`. 
+
+- The column containing all the data needed to be deserialised by using `.selectExpr()` with the expression `"CAST(data as STRING)"` to return a dataframe of dictionaries for each record in each row. In order to arrange the data found in each row into their respective columns, a custom schema needed to be made using the `StructType()` function with each `StructField()` being used to indicate each column along with the allocated data type.
+
+- Using this schema, `.select()` was used with `from_json()` along with the column `data` and then every column from here was selected again using `.select` for the `df_pin` dataframe. Now the data was in the correct structure and could be cleaned again.
+
+![](Documentation/9/18.png)
+ 
+![](Documentation/9/19.png)
+
+- Once the data had been cleaned, it could now be written to a Databricks delta table. All of these operations, starting from reading the streaming data to writing the streaming data needed to be ran within the same cell. The command `.writeStream` was used with several arguments passed through including the `format` as `delta`, the `outputMode` as `append`, the `checkpointLocation` as `/tmp/kinesis/_checkpoints/` and the table name `12b287eedf6d_pin_table` using `.table()`. 
+
+- The `append` output mode was used so that only new rows were appended to each result table were written to external storage since the last trigger. The `checkpointLocation` procided a checkpoint which is typical with streaming queries for fault tolerance and ensured resiliency. 
 
 ![](Documentation/9/21.png)
 
-- 
+- The geo data was read similarly except this time with a different schema to match the structure of the data. 
 
 ![](Documentation/9/22.png)
 
-- 
-
 ![](Documentation/9/23.png)
 
-- 
+- The geo data was written similarly to instead this time to a table called `12b287eedf6d_geo_table`
 
 ![](Documentation/9/24.png)
 
-- 
+- The user data was read similarly except this time with a different schema to match the structure of the data. 
 
 ![](Documentation/9/25.png)
 
-- 
-
 ![](Documentation/9/26.png)
 
-- 
+- The user data was written similarly to instead this time to a table called `12b287eedf6d_user_table`
 
 ![](Documentation/9/27.png)
 
-- 
+- Before the `writeStream` function could be used again the checkpoint folder needed to be deleted each time using `dbutils.fs.rm()`.
 
 ![](Documentation/9/28.png)
 
-- 
-
 ![](Documentation/9/29.png)
-
-- 
 
 ![](Documentation/9/30.png)
 
-- 
+- The `readStream` and `writeStream` queries would run indefinitely so after interrupting them, the delta tables could be checked within the catalog. For each table, the data was saved successfully as expected.
