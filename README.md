@@ -1,6 +1,6 @@
 # Pinterest Project
 
-Pinterest project.
+This project involved creating a data pipeline using the AWS cloud and Pinterest data. 
 
 ## Milestone 1 - Environment setup
 
@@ -363,7 +363,7 @@ The eigth milestone was to use AWS MWAA (Managed Workflows for Apache Airflow) f
 
 ## Milestone 9 - Stream processing: AWS Kinesis
 
-- The ninth milestone was to send the Pinterest data instead to AWS Kinesis as data streams and then read and save this data within Databricks while it was streaming instead. 
+The ninth milestone was to send the Pinterest data instead to AWS Kinesis as data streams and then read and save this data within Databricks while it was streaming instead. 
 
 ![](Documentation/9/1.png)
 
